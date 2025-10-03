@@ -1,245 +1,400 @@
 # Entra ID Device Management Toolkit
 
-A collection of PowerShell scripts for managing and maintaining a clean Microsoft Entra ID (Azure AD) device inventory.
-
-## 📁 Project Structure
-
-```
-EntraID-Device-Management/
-├── README.md                          # This file - project overview
-├── Scripts/                           # PowerShell scripts
-│   ├── delete-entra-devices.ps1      # Remove inactive/stale devices
-│   └── delete-duplicate-device.ps1   # Remove duplicate device registrations
-└── Documentation/                     # Comprehensive guides
-    ├── SCRIPT-COMPARISON-GUIDE.md    # When to use which script
-    ├── DELETE-DUPLICATE-DEVICE-README.md
-    ├── QUICK-REFERENCE-DUPLICATES.md
-    └── SCRIPT_IMPROVEMENTS.md
-```
+PowerShell toolkit for managing and cleaning up Microsoft Entra ID (Azure AD) device registrations - remove inactive devices and resolve duplicates.
 
 ## 🎯 Purpose
 
 This toolkit helps IT administrators maintain clean and accurate device inventories in Microsoft Entra ID by:
-- Removing inactive or abandoned devices
-- Eliminating duplicate device registrations
-- Reducing licensing costs
-- Improving security posture
-- Ensuring accurate reporting
+- 🧹 Removing inactive or abandoned devices
+- 🔄 Eliminating duplicate device registrations
+- 💰 Reducing licensing costs (Intune, etc.)
+- 🔒 Improving security posture
+- 📊 Ensuring accurate reporting
 
-## 📜 Available Scripts
+## � What's Inside
 
-### 1. **delete-entra-devices.ps1** - Inactive Device Cleanup
-Removes devices that haven't been used in a specified number of days.
+| Script | Purpose | Use When |
+|--------|---------|----------|
+| **delete-duplicate-device.ps1** | Removes duplicate registrations (keeps Hybrid joined, removes Registered) | Fixing registration conflicts after AD Connect |
+| **delete-entra-devices.ps1** | Removes devices inactive for X days | Quarterly cleanup, offboarding, license reduction |
 
-**Use Cases:**
-- Quarterly device cleanup
-- Removing devices from former employees
-- Reducing Intune license costs
-- Security hygiene
+**Documentation:**
+- `Documentation/SCRIPT-COMPARISON-GUIDE.md` - When to use which script
+- `Documentation/DELETE-DUPLICATE-DEVICE-README.md` - Detailed duplicate cleanup guide
+- `Documentation/QUICK-REFERENCE-DUPLICATES.md` - One-page cheat sheet
 
-**Quick Start:**
+---
+
+## 🚀 Quick Start (5 Minutes)
+
+---
+
+## 🚀 Quick Start (5 Minutes)
+
+### Step 1: Install Prerequisites (One-time)
 ```powershell
-# Report only
-./Scripts/delete-entra-devices.ps1 -DaysInactive 90
-
-# Delete devices inactive for 180+ days
-./Scripts/delete-entra-devices.ps1 -DaysInactive 180 -Delete
-```
-
-### 2. **delete-duplicate-device.ps1** - Duplicate Device Cleanup
-Removes "Azure AD registered" devices when "Azure AD hybrid joined" versions exist.
-
-**Use Cases:**
-- Fixing duplicate registrations after AD Connect deployment
-- Cleaning up manual registrations
-- Resolving Conditional Access conflicts
-
-**Quick Start:**
-```powershell
-# Report only
-./Scripts/delete-duplicate-device.ps1
-
-# Delete duplicates with confirmation
-./Scripts/delete-duplicate-device.ps1 -Delete
-```
-
-## 🚀 Quick Start Guide
-
-### Prerequisites
-1. **PowerShell 7+** (or Windows PowerShell 5.1+)
-2. **Microsoft Graph PowerShell SDK:**
-   ```powershell
-   Install-Module Microsoft.Graph -Scope CurrentUser
-   ```
-3. **Permissions:**
-   - Read-only: `Device.Read.All`
-   - Deletion: `Device.ReadWrite.All`
-
-### First Time Setup
-```powershell
-# Navigate to project folder
-cd ~/Developer/EntraID-Device-Management
-
-# Install Microsoft Graph module if needed
+# Install Microsoft Graph PowerShell SDK
 Install-Module Microsoft.Graph -Scope CurrentUser
 
-# Test connectivity
-Connect-MgGraph -Scopes "Device.Read.All"
-Get-MgDevice -Top 10
-Disconnect-MgGraph
+# Import the module
+Import-Module Microsoft.Graph
 ```
 
-### Recommended Workflow
+**Required Permissions:**
+- Read-only: `Device.Read.All`
+- Deletion: `Device.ReadWrite.All`
+
+### Step 2: Navigate to Scripts
 ```powershell
-# Step 1: Remove duplicates first (safer, smaller scope)
-./Scripts/delete-duplicate-device.ps1
-# Review CSV, then:
-./Scripts/delete-duplicate-device.ps1 -Delete
-
-# Step 2: Clean up inactive devices
-./Scripts/delete-entra-devices.ps1 -DaysInactive 180
-# Review CSV, then:
-./Scripts/delete-entra-devices.ps1 -DaysInactive 180 -Delete
+cd path/to/entra-id-device-management/Scripts
 ```
 
-## 📚 Documentation
+### Step 3: Run Your First Report (Safe - No Deletion)
 
-### Quick References
-- **[QUICK-REFERENCE-DUPLICATES.md](Documentation/QUICK-REFERENCE-DUPLICATES.md)** - One-page cheat sheet for duplicate cleanup
+**Option A - Find Duplicate Devices:**
+```powershell
+./delete-duplicate-device.ps1
+# Creates CSV report: EntraDevices_DuplicateCleanup_YYYYMMDD_HHMMSS.csv
+```
 
-### Detailed Guides
-- **[SCRIPT-COMPARISON-GUIDE.md](Documentation/SCRIPT-COMPARISON-GUIDE.md)** - When to use which script
-- **[DELETE-DUPLICATE-DEVICE-README.md](Documentation/DELETE-DUPLICATE-DEVICE-README.md)** - Full duplicate cleanup guide
-- **[SCRIPT_IMPROVEMENTS.md](Documentation/SCRIPT_IMPROVEMENTS.md)** - Version history and improvements
+**Option B - Find Inactive Devices:**
+```powershell
+./delete-entra-devices.ps1 -DaysInactive 90
+# Creates CSV report: EntraDevices_Inactive_YYYYMMDD_HHMMSS.csv
+```
 
-## ⚙️ Common Commands
+### Step 4: Review CSV → Then Delete
+
+After reviewing the CSV report, delete if needed:
+
+```powershell
+# Test what would be deleted (safe)
+./delete-duplicate-device.ps1 -Delete -WhatIf
+
+# Actually delete (requires typing 'DELETE' to confirm)
+./delete-duplicate-device.ps1 -Delete
+```
+
+---
+
+## 📋 Common Usage Scenarios
+
+### Scenario 1: New Tenant Cleanup
+```powershell
+# Week 1: Discover what needs cleanup
+./delete-duplicate-device.ps1
+./delete-entra-devices.ps1 -DaysInactive 180
+
+# Week 2: Review CSVs, communicate with team, then execute
+./delete-duplicate-device.ps1 -Delete
+./delete-entra-devices.ps1 -DaysInactive 180 -Delete
+```
+
+### Scenario 2: Monthly Maintenance
+```powershell
+# First Monday of each month
+./delete-duplicate-device.ps1 -Delete
+./delete-entra-devices.ps1 -DaysInactive 90 -Delete
+```
+
+### Scenario 3: After Employee Offboarding
+```powershell
+# Remove recently inactive devices
+./delete-entra-devices.ps1 -DaysInactive 30 -IncludeDisabled -Delete
+```
+
+---
+
+## ⚙️ Command Reference
+
+### Duplicate Device Cleanup
+```powershell
+# Basic report
+./delete-duplicate-device.ps1
+
+# Only delete duplicates older than 30 days
+./delete-duplicate-device.ps1 -Delete -MinimumDaysOld 30
+
+# Preview deletion (no actual changes)
+./delete-duplicate-device.ps1 -Delete -WhatIf
+
+# Automated deletion without confirmation (careful!)
+./delete-duplicate-device.ps1 -Delete -Force
+
+# Use device code authentication (for servers)
+./delete-duplicate-device.ps1 -NoBrowser
+```
 
 ### Inactive Device Cleanup
 ```powershell
 # Report devices inactive for 90+ days
-./Scripts/delete-entra-devices.ps1 -DaysInactive 90
+./delete-entra-devices.ps1 -DaysInactive 90
 
 # Include devices that never signed in
-./Scripts/delete-entra-devices.ps1 -DaysInactive 180 -IncludeNullSignIn
+./delete-entra-devices.ps1 -DaysInactive 180 -IncludeNullSignIn
+
+# Include disabled devices
+./delete-entra-devices.ps1 -DaysInactive 90 -IncludeDisabled
 
 # Delete with confirmation
-./Scripts/delete-entra-devices.ps1 -DaysInactive 180 -Delete
-
-# Preview what would be deleted
-./Scripts/delete-entra-devices.ps1 -DaysInactive 90 -Delete -WhatIf
-```
-
-### Duplicate Device Cleanup
-```powershell
-# Find duplicates (report only)
-./Scripts/delete-duplicate-device.ps1
-
-# Delete duplicates older than 30 days
-./Scripts/delete-duplicate-device.ps1 -Delete -MinimumDaysOld 30
+./delete-entra-devices.ps1 -DaysInactive 180 -Delete
 
 # Preview deletion
-./Scripts/delete-duplicate-device.ps1 -Delete -WhatIf
+./delete-entra-devices.ps1 -DaysInactive 90 -Delete -WhatIf
 
-# Automated deletion (no confirmation)
-./Scripts/delete-duplicate-device.ps1 -Delete -Force
+# Custom report path
+./delete-entra-devices.ps1 -DaysInactive 90 -ReportPath "./reports/my-report.csv"
 ```
+
+---
 
 ## 🛡️ Safety Features
 
-Both scripts include:
-- ✅ **Report-first approach** - Generate reports before deletion
-- ✅ **Confirmation prompts** - Must type "DELETE" to confirm
-- ✅ **WhatIf support** - Test without making changes
-- ✅ **Detailed logging** - CSV reports and error logs
-- ✅ **Progress tracking** - Visual feedback during execution
-- ✅ **Error handling** - Comprehensive try-catch blocks
+Both scripts are designed with safety in mind:
 
-## 📊 Output Files
+✅ **Report-first approach** - Always generates CSV before any deletion  
+✅ **Confirmation prompts** - Must type "DELETE" to confirm (unless -Force)  
+✅ **WhatIf support** - Test deletions without making changes  
+✅ **Detailed logging** - CSV reports with timestamps  
+✅ **Error tracking** - Separate error logs for failed deletions  
+✅ **Progress indicators** - Real-time feedback during execution
 
-Scripts generate timestamped files:
-- **CSV Reports:** `EntraDevices_*.csv` - Devices identified for action
-- **Error Logs:** `EntraDevices_*Errors_*.log` - Deletion failures (if any)
+---
 
-Example:
-```
-EntraDevices_Inactive_20251003_143022.csv
-EntraDevices_DuplicateCleanup_20251003_150145.csv
-EntraDevices_DeleteErrors_20251003_143530.log
-```
+## 📊 Understanding Output Files
 
-## 🔒 Permissions Required
+Scripts generate timestamped files in the current directory:
 
-### For Reporting (Read-Only)
-- `Device.Read.All` or `Directory.Read.All`
+| File Pattern | Content | When Created |
+|--------------|---------|--------------|
+| `EntraDevices_Inactive_*.csv` | Devices inactive for X days | After running delete-entra-devices.ps1 |
+| `EntraDevices_DuplicateCleanup_*.csv` | Duplicate registrations found | After running delete-duplicate-device.ps1 |
+| `EntraDevices_DeleteErrors_*.log` | Failed deletions (if any) | Only if deletion errors occur |
 
-### For Deletion
-- `Device.ReadWrite.All`
+**Example CSV columns:**
+- `DisplayName` - Device name
+- `TrustType` - How device is joined (Hybrid/Registered/Joined)
+- `InactiveDays` - Days since last sign-in
+- `LastSignIn` - Last activity timestamp
+- `AccountEnabled` - Active or disabled
+- `DeviceId` - Unique device identifier
 
-Permissions are requested when you run the script for the first time.
+---
 
 ## 💡 Best Practices
 
-1. **Always run in report mode first**
+### Before Running in Production
+
+1. **Test in report mode first** ✓
    ```powershell
-   # Good: Review before deleting
-   ./Scripts/delete-entra-devices.ps1 -DaysInactive 90
-   # Then delete after review
-   ./Scripts/delete-entra-devices.ps1 -DaysInactive 90 -Delete
+   # Always run without -Delete first
+   ./delete-entra-devices.ps1 -DaysInactive 90
    ```
 
-2. **Use WhatIf for testing**
+2. **Use WhatIf for preview** ✓
    ```powershell
-   ./Scripts/delete-duplicate-device.ps1 -Delete -WhatIf
+   ./delete-duplicate-device.ps1 -Delete -WhatIf
    ```
 
-3. **Start conservative**
+3. **Start conservative** ✓
    - Begin with high day counts (180+ days)
-   - Use age filters on duplicate cleanup
+   - Use `-MinimumDaysOld` on duplicate cleanup
    - Gradually tighten criteria
 
-4. **Keep audit logs**
-   - Save all CSV reports
-   - Document actions taken
-   - Maintain deletion logs
-
-5. **Communicate changes**
+4. **Communicate changes** ✓
    - Notify IT team before running
-   - Inform users about cleanup policies
-   - Set expectations
+   - Inform stakeholders about cleanup policies
+   - Document actions in change management system
 
-## 🗓️ Recommended Maintenance Schedule
+5. **Keep audit trail** ✓
+   - Save all CSV reports
+   - Archive deletion logs
+   - Document rationale for deletions
 
-### Monthly
-- Run duplicate device cleanup
-- Review reports for patterns
+### Recommended Maintenance Schedule
 
-### Quarterly
-- Run inactive device cleanup (90-180 days)
-- Delete after review and approval
+| Frequency | Task |
+|-----------|------|
+| **Monthly** | Run duplicate device cleanup |
+| **Quarterly** | Run inactive device cleanup (90-180 days) |
+| **As Needed** | After AD Connect deployment, org changes, or policy updates |
 
-### After Major Changes
-- After Azure AD Connect deployment
-- After organizational mergers
-- After policy changes
+---
 
-## 🧪 Testing
+## � Authentication & Permissions
 
-Before production use:
+---
+
+## 🔑 Authentication & Permissions
+
+### First Time Authentication
+When you run a script for the first time:
 ```powershell
-# 1. Test connectivity
-Connect-MgGraph -Scopes "Device.Read.All"
+# Browser-based authentication (default)
+./delete-duplicate-device.ps1
 
-# 2. Run in report mode
-./Scripts/delete-duplicate-device.ps1
-
-# 3. Test with WhatIf
-./Scripts/delete-duplicate-device.ps1 -Delete -WhatIf
-
-# 4. Test in small batch (if available)
-./Scripts/delete-entra-devices.ps1 -DaysInactive 365 -Delete
-
-# 5. Review all outputs before scaling up
+# Device code authentication (for servers without browser)
+./delete-duplicate-device.ps1 -NoBrowser
 ```
+
+You'll be prompted to sign in and consent to permissions.
+
+### Required Permissions
+
+| Action | Permission Needed | Scope |
+|--------|------------------|-------|
+| **Report Only** | `Device.Read.All` | Read device information |
+| **Delete Devices** | `Device.ReadWrite.All` | Read and delete devices |
+
+Admin consent is required for these permissions.
+
+### Testing Connectivity
+```powershell
+# Test connection
+Connect-MgGraph -Scopes "Device.Read.All"
+Get-MgDevice -Top 10
+Get-MgContext  # Shows current tenant
+Disconnect-MgGraph
+```
+
+---
+
+## 🆘 Troubleshooting
+
+### "Connect-MgGraph not recognized"
+```powershell
+# Solution: Install the Microsoft Graph module
+Install-Module Microsoft.Graph -Scope CurrentUser
+Import-Module Microsoft.Graph
+```
+
+### "Insufficient privileges to complete the operation"
+**Cause:** You need `Device.ReadWrite.All` permission  
+**Solution:** Contact your Azure/Entra ID admin to grant consent
+
+### "No devices found" or "Empty report"
+**Possible causes:**
+- Connected to wrong tenant
+- Insufficient permissions
+- No devices match criteria
+
+```powershell
+# Check which tenant you're connected to
+Connect-MgGraph -Scopes "Device.Read.All"
+Get-MgContext
+```
+
+### Script execution policy errors
+```powershell
+# Windows: Allow script execution
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+
+# macOS/Linux: Mark script as executable
+chmod +x ./Scripts/*.ps1
+```
+
+### Authentication keeps prompting
+```powershell
+# Disconnect and reconnect
+Disconnect-MgGraph
+Connect-MgGraph -Scopes "Device.ReadWrite.All"
+```
+
+---
+
+## 📚 Additional Documentation
+
+Detailed guides available in the `Documentation/` folder:
+
+- **[SCRIPT-COMPARISON-GUIDE.md](Documentation/SCRIPT-COMPARISON-GUIDE.md)** - When to use which script
+- **[DELETE-DUPLICATE-DEVICE-README.md](Documentation/DELETE-DUPLICATE-DEVICE-README.md)** - Comprehensive duplicate cleanup guide  
+- **[QUICK-REFERENCE-DUPLICATES.md](Documentation/QUICK-REFERENCE-DUPLICATES.md)** - One-page cheat sheet
+- **[SCRIPT_IMPROVEMENTS.md](Documentation/SCRIPT_IMPROVEMENTS.md)** - Version history and changelog
+
+---
+
+## ⚠️ Important Notes
+
+### Safety Considerations
+
+- ✓ **Always test in non-production first** if possible
+- ✓ **Review CSV reports thoroughly** before deletion
+- ✓ **Use WhatIf** to preview actions
+- ✓ **Start conservative** (high day counts, age restrictions)
+- ✓ **Keep backups** of all reports for audit trail
+- ✓ **Follow change management** procedures
+
+### What Gets Deleted
+
+**delete-duplicate-device.ps1:**
+- Only deletes "Azure AD registered" devices
+- Keeps "Azure AD hybrid joined" devices (preferred)
+- Requires both trust types exist for same device name
+
+**delete-entra-devices.ps1:**
+- Deletes devices inactive beyond specified days
+- Can include devices with null sign-in dates (optional)
+- Can include disabled devices (optional)
+
+### Device Recovery
+
+⚠️ **Deleted devices cannot be easily recovered** from Entra ID. Ensure you:
+- Have CSV reports of deleted devices
+- Communicate with affected users/departments
+- Document all cleanup activities
+- Follow organizational policies
+
+---
+
+## 🎓 Pro Tips
+
+1. **Run duplicates cleanup first** - Cleaner data for inactive device analysis
+2. **Save all CSV reports** - Keep for compliance and audit trail
+3. **Use WhatIf liberally** - Preview before committing
+4. **Start with 180+ days** - More conservative, less risky
+5. **Schedule regular runs** - Monthly duplicates, quarterly inactive
+6. **Document your process** - Create runbooks for your organization
+
+---
+
+## 🤝 Contributing & Support
+
+### Found an Issue?
+Check the troubleshooting section above and review the detailed documentation.
+
+### Want to Contribute?
+This is an open-source project. Contributions welcome:
+- Bug fixes
+- Feature enhancements
+- Documentation improvements
+- Additional examples
+
+---
+
+## 📄 License
+
+MIT License - See [LICENSE](LICENSE) file for details.
+
+---
+
+## ⚙️ Technical Details
+
+**PowerShell Version:** 7+ recommended, 5.1+ supported  
+**Graph API Version:** v1.0 (via Microsoft.Graph PowerShell SDK)  
+**Last Updated:** October 3, 2025
+
+---
+
+## 🚦 Quick Reference
+
+### Need to...
+- **Clean up duplicates?** → `./delete-duplicate-device.ps1`
+- **Remove old devices?** → `./delete-entra-devices.ps1 -DaysInactive 180`
+- **Just see what's there?** → Run either script without `-Delete`
+- **Test before deleting?** → Add `-WhatIf` to any delete command
+- **Automate cleanup?** → Use `-Force` (but be careful!)
+
+**Ready to get started?** Jump to [Quick Start](#-quick-start-5-minutes) above! 🚀
 
 ## ❓ Troubleshooting
 
