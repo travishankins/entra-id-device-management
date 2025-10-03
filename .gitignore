@@ -1,0 +1,35 @@
+# Generated CSV Reports
+*.csv
+
+# Generated Error Logs
+*.log
+
+# PowerShell transcript files
+*.txt
+
+# Backup files
+*.bak
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Sensitive data
+*.credentials
+*.secrets
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Temporary files
+temp/
+tmp/
